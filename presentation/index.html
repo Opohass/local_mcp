@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Hands-on Lab — Giving AI Tools Superpowers</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/theme/night.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/monokai.min.css">
+    <link rel="stylesheet" href="assets/styles/custom.css">
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- ============================================================ -->
+<!-- SECTION 1: What is MCP? -->
+<!-- ============================================================ -->
+
+<section>
+    <h1>Model Context Protocol</h1>
+    <h3>Giving AI Tools Superpowers</h3>
+    <p class="small">Hands-on Lab Workshop</p>
+    <aside class="notes">
+        Welcome to the MCP Hands-on Lab. Today we'll learn how to give AI assistants
+        access to real tools — from running commands on remote machines to querying databases.
+    </aside>
+</section>
+
+<section>
+    <h2>The Problem</h2>
+    <div class="highlight-box">
+        <p>AI models are <strong>isolated</strong> from your tools and data.</p>
+        <p>They can't read your files, run your tests, check your servers, or access your APIs.</p>
+    </div>
+    <div class="mermaid">
+    graph LR
+        A[AI Model] -->|"Can't access"| B[Your Files]
+        A -->|"Can't access"| C[Your APIs]
+        A -->|"Can't access"| D[Your Servers]
+        A -->|"Can't access"| E[Your Databases]
+        style A fill:#e74c3c,stroke:#c0392b,color:#fff
+        style B fill:#333,stroke:#555,color:#fff
+        style C fill:#333,stroke:#555,color:#fff
+        style D fill:#333,stroke:#555,color:#fff
+        style E fill:#333,stroke:#555,color:#fff
+    </div>
+    <aside class="notes">
+        Without MCP, every AI integration is a custom one-off. Each tool needs its own
+        API adapter, authentication flow, and data format. This doesn't scale.
+    </aside>
+</section>
+
+<section>
+    <h2>The Solution: MCP</h2>
+    <p>A <strong>universal, open protocol</strong> connecting AI assistants to external tools.</p>
+    <div class="mermaid">
+    graph LR
+        A[AI Assistant] <-->|MCP| B[File System]
+        A <-->|MCP| C[GitHub API]
+        A <-->|MCP| D[Remote Servers]
+        A <-->|MCP| E[Databases]
+        style A fill:#2ecc71,stroke:#27ae60,color:#fff
+        style B fill:#3498db,stroke:#2980b9,color:#fff
+        style C fill:#3498db,stroke:#2980b9,color:#fff
+        style D fill:#3498db,stroke:#2980b9,color:#fff
+        style E fill:#3498db,stroke:#2980b9,color:#fff
+    </div>
+    <div class="highlight-box">
+        One protocol. Any tool. Any AI client.
+    </div>
+    <aside class="notes">
+        MCP standardizes the connection. Build a tool once, use it with Claude, VS Code,
+        Cursor, or any MCP-compatible client. Think of it like USB for AI tools.
+    </aside>
+</section>
+
+<section>
+    <h2>Architecture</h2>
+    <div class="mermaid">
+    graph TB
+        subgraph Host ["Host Application"]
+            Client[MCP Client]
+        end
+        subgraph Server1 ["MCP Server A"]
+            T1[Tools]
+            R1[Resources]
+            P1[Prompts]
+        end
+        subgraph Server2 ["MCP Server B"]
+            T2[Tools]
+            R2[Resources]
+        end
+        Client <-->|"JSON-RPC 2.0"| Server1
+        Client <-->|"JSON-RPC 2.0"| Server2
+        style Host fill:#2c3e50,stroke:#34495e,color:#fff
+        style Server1 fill:#1a5276,stroke:#2980b9,color:#fff
+        style Server2 fill:#1a5276,stroke:#2980b9,color:#fff
+    </div>
+    <ul>
+        <li><strong>Host</strong>: Claude Code, VS Code, Cursor</li>
+        <li><strong>Client</strong>: Built into the host, manages server connections</li>
+        <li><strong>Server</strong>: Your code — exposes tools, resources, prompts</li>
+    </ul>
+    <aside class="notes">
+        The host application contains an MCP client that can connect to multiple servers.
+        Communication uses JSON-RPC 2.0 over either stdio or HTTP.
+    </aside>
+</section>
+
+<section>
+    <h2>The Three Primitives</h2>
+    <table>
+        <thead>
+            <tr><th>Primitive</th><th>What</th><th>Who Controls</th><th>Example</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Tools</strong></td>
+                <td>Functions the AI can call</td>
+                <td>AI decides when to use</td>
+                <td><code>run_remote_command(host, cmd)</code></td>
+            </tr>
+            <tr>
+                <td><strong>Resources</strong></td>
+                <td>Read-only data</td>
+                <td>User/app controls access</td>
+                <td><code>file://config.yaml</code></td>
+            </tr>
+            <tr>
+                <td><strong>Prompts</strong></td>
+                <td>Instruction templates</td>
+                <td>User selects</td>
+                <td><code>security_review</code> checklist</td>
+            </tr>
+        </tbody>
+    </table>
+    <aside class="notes">
+        Tools are the most common primitive. The AI reads the tool description and decides
+        when to call it. Resources are for data. Prompts are pre-built instructions.
+    </aside>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 2: How MCP Works -->
+<!-- ============================================================ -->
+
+<section>
+    <h2>How MCP Works</h2>
+    <h4>Communication Flow</h4>
+    <div class="mermaid">
+    sequenceDiagram
+        participant C as Client
+        participant S as Server
+        C->>S: initialize (protocol version, capabilities)
+        S->>C: initialize response (server capabilities)
+        C->>S: tools/list
+        S->>C: [tool definitions with JSON schemas]
+        Note over C: User asks a question...
+        C->>S: tools/call {name: "port_checker", args: {ports: "8080"}}
+        S->>C: {content: [{type: "text", text: ":8080 IN USE (pid 1234)"}]}
+    </div>
+    <aside class="notes">
+        The client discovers tools on startup, then calls them as needed. All communication
+        uses JSON-RPC 2.0 messages. The protocol is stateful — there's an initialization handshake.
+    </aside>
+</section>
+
+<section>
+    <h2>Transport: STDIO vs HTTP</h2>
+    <div class="two-columns">
+        <div>
+            <h4>STDIO (Local)</h4>
+            <div class="mermaid">
+            graph TB
+                C[Client] -->|stdin| S[Server Process]
+                S -->|stdout| C
+                style C fill:#2ecc71,stroke:#27ae60,color:#fff
+                style S fill:#3498db,stroke:#2980b9,color:#fff
+            </div>
+            <ul class="small">
+                <li>Same machine only</li>
+                <li>One client per server</li>
+                <li>Zero network config</li>
+                <li>Best for local dev tools</li>
+            </ul>
+        </div>
+        <div>
+            <h4>HTTP (Remote)</h4>
+            <div class="mermaid">
+            graph TB
+                C1[Client 1] -->|HTTPS| S[Server :9000]
+                C2[Client 2] -->|HTTPS| S
+                C3[Client 3] -->|HTTPS| S
+                style C1 fill:#2ecc71,stroke:#27ae60,color:#fff
+                style C2 fill:#2ecc71,stroke:#27ae60,color:#fff
+                style C3 fill:#2ecc71,stroke:#27ae60,color:#fff
+                style S fill:#e74c3c,stroke:#c0392b,color:#fff
+            </div>
+            <ul class="small">
+                <li>Accessible from anywhere</li>
+                <li>Multiple clients</li>
+                <li>Needs auth + TLS</li>
+                <li>Best for team/cloud tools</li>
+            </ul>
+        </div>
+    </div>
+    <aside class="notes">
+        STDIO is simpler — the host spawns the server as a child process and communicates
+        via pipes. HTTP runs on a port and can serve multiple clients over the network.
+    </aside>
+</section>
+
+<section>
+    <h2>Under the Hood: JSON-RPC</h2>
+    <p>All MCP messages are JSON-RPC 2.0:</p>
+    <pre><code class="language-json">// Client → Server: Call a tool
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "tools/call",
+  "params": {
+    "name": "port_checker",
+    "arguments": { "ports": "3000,8080" }
+  }
+}
+
+// Server → Client: Tool result
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "result": {
+    "content": [{
+      "type": "text",
+      "text": "Port Status:\n  :3000  FREE\n  :8080  IN USE"
+    }]
+  }
+}</code></pre>
+    <aside class="notes">
+        You don't need to write JSON-RPC manually — the SDK handles it. But understanding
+        the wire format helps when debugging.
+    </aside>
+</section>
+
+<section>
+    <h2>The MCP Ecosystem</h2>
+    <div class="two-columns">
+        <div>
+            <h4>Clients (Hosts)</h4>
+            <ul>
+                <li>Claude Desktop / Claude Code</li>
+                <li>VS Code (Copilot)</li>
+                <li>Cursor</li>
+                <li>Windsurf</li>
+                <li>Any custom client</li>
+            </ul>
+        </div>
+        <div>
+            <h4>Server Registries</h4>
+            <ul>
+                <li>Official: <a href="https://github.com/modelcontextprotocol/servers">modelcontextprotocol/servers</a></li>
+                <li>Community: <a href="https://github.com/wong2/awesome-mcp-servers">awesome-mcp-servers</a></li>
+                <li>Directory: <a href="https://mcpservers.org">mcpservers.org</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="highlight-box">
+        Build once → use everywhere. The same MCP server works with <strong>any</strong> compatible client.
+    </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 3: Building with Python -->
+<!-- ============================================================ -->
+
+<section>
+    <h2>Building MCP Servers with Python</h2>
+    <h4>FastMCP: 10 Lines to Your First Server</h4>
+    <pre><code class="language-python">from fastmcp import FastMCP
+
+mcp = FastMCP("my-tools")
+
+@mcp.tool()
+def greet(name: str) -> str:
+    """Say hello to someone."""
+    return f"Hello, {name}!"
+
+if __name__ == "__main__":
+    mcp.run(transport="stdio")</code></pre>
+    <div class="highlight-box">
+        That's it. Type hints → JSON schema. Docstring → tool description. One decorator → registered.
+    </div>
+    <aside class="notes">
+        FastMCP is the official high-level Python SDK. It uses decorators to register tools
+        and automatically generates JSON schemas from your type hints.
+    </aside>
+</section>
+
+<section>
+    <h2>Tools: @mcp.tool()</h2>
+    <pre><code class="language-python">@mcp.tool()
+def run_remote_command(host: str, command: str, user: str = "") -> str:
+    """Run a shell command on a remote machine via SSH.
+
+    Args:
+        host: Hostname or IP address.
+        command: The shell command to execute.
+        user: SSH username (optional).
+    """
+    ssh_target = f"{user}@{host}" if user else host
+    result = subprocess.run(
+        ["ssh", ssh_target, command],
+        capture_output=True, text=True, timeout=30,
+    )
+    return result.stdout or result.stderr</code></pre>
+    <p>The AI reads the docstring to decide <strong>when</strong> and <strong>how</strong> to call this tool.</p>
+    <aside class="notes">
+        Good docstrings are critical. The AI uses them to understand what the tool does,
+        what parameters mean, and when it's appropriate to call it.
+    </aside>
+</section>
+
+<section>
+    <h2>Prompts: @mcp.prompt()</h2>
+    <pre><code class="language-python">@mcp.prompt()
+def security_review() -> str:
+    """Security-focused review checklist."""
+    return """You are performing a security review. Focus on:
+
+    ## Authentication & Authorization
+    - Are auth checks present on all protected endpoints?
+    - Is session management secure?
+
+    ## Input Validation
+    - Is all external input validated?
+    - Is output encoding applied?
+
+    ## OWASP Top 10
+    - Injection, XSS, CSRF, ...
+
+    Flag issues by severity: CRITICAL / HIGH / MEDIUM / LOW."""</code></pre>
+    <p>Prompts give the AI <strong>rich context</strong> for specific tasks.</p>
+    <aside class="notes">
+        Prompts are like instruction templates. They're not called automatically — the user
+        asks the AI to use them. Great for standardizing review processes.
+    </aside>
+</section>
+
+<section>
+    <h2>Resources: @mcp.resource()</h2>
+    <pre><code class="language-python">@mcp.resource("config://app")
+def get_app_config() -> str:
+    """Returns the application configuration."""
+    return Path("config.yaml").read_text()
+
+@mcp.resource("logs://{service}")
+def get_service_logs(service: str) -> str:
+    """Returns recent logs for a service."""
+    return Path(f"/var/log/{service}.log").read_text()[-5000:]</code></pre>
+    <p>Resources expose <strong>read-only data</strong> with URI templates.</p>
+    <aside class="notes">
+        Resources are like GET endpoints. The AI or user can read them but can't modify them.
+        URI templates with curly braces create dynamic resources.
+    </aside>
+</section>
+
+<section>
+    <h2>Testing: FastMCP Inspector</h2>
+    <pre><code class="language-bash"># Launch the web inspector
+fastmcp dev my_server.py</code></pre>
+    <div class="highlight-box">
+        <p>Opens a web UI where you can:</p>
+        <ul>
+            <li>See all registered tools, resources, prompts</li>
+            <li>Call tools with custom arguments</li>
+            <li>View raw JSON-RPC messages</li>
+            <li>Debug before connecting to any AI client</li>
+        </ul>
+    </div>
+    <aside class="notes">
+        Always test with the inspector first. It shows you exactly what the AI client will
+        see — tool schemas, descriptions, and responses.
+    </aside>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 4: Connecting to Clients -->
+<!-- ============================================================ -->
+
+<section>
+    <h2>Connecting to Claude Code</h2>
+    <p>Create <code>.mcp.json</code> in your project root:</p>
+    <pre><code class="language-json">{
+  "mcpServers": {
+    "dev-tools": {
+      "command": "python",
+      "args": ["path/to/server.py"]
+    }
+  }
+}</code></pre>
+    <pre><code class="language-bash"># Start Claude Code from the project directory
+cd my-project
+claude
+# → Tools are auto-discovered!</code></pre>
+    <aside class="notes">
+        Claude Code reads .mcp.json on startup and launches each server as a child process.
+        The tools appear automatically in the conversation.
+    </aside>
+</section>
+
+<section>
+    <h2>Connecting to VS Code</h2>
+    <p>Create <code>.vscode/mcp.json</code> in your workspace:</p>
+    <pre><code class="language-json">{
+  "mcpServers": {
+    "dev-tools": {
+      "command": "python",
+      "args": ["path/to/server.py"]
+    }
+  }
+}</code></pre>
+    <ul>
+        <li>Restart VS Code after editing</li>
+        <li>Open Copilot Chat → look for the tools icon</li>
+        <li>Requires VS Code 1.99+</li>
+    </ul>
+    <aside class="notes">
+        Same format as Claude Code. VS Code's Copilot Chat will show MCP tools
+        in the tools panel. You can also use variable substitution like ${workspaceFolder}.
+    </aside>
+</section>
+
+<section>
+    <h2>External MCP Servers</h2>
+    <p>Connect to community-built servers via <code>npx</code>:</p>
+    <pre><code class="language-json">{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."]
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_..."
+      }
+    }
+  }
+}</code></pre>
+    <aside class="notes">
+        You can mix and match — your custom servers alongside community servers.
+        Each server runs as an independent process.
+    </aside>
+</section>
+
+<section>
+    <h2>Security Considerations</h2>
+    <div class="warning-box">
+        <p>MCP servers run with <strong>your permissions</strong>. They can access your files, network, and credentials.</p>
+    </div>
+    <ul>
+        <li><strong>Least privilege</strong>: Only expose needed directories/APIs</li>
+        <li><strong>No hardcoded secrets</strong>: Use environment variables</li>
+        <li><strong>Review source code</strong>: Know what a server does before connecting</li>
+        <li><strong>Pin versions</strong>: Use specific package versions</li>
+        <li><strong>Monitor</strong>: Check what tools are being called</li>
+    </ul>
+    <aside class="notes">
+        This is important to emphasize. MCP servers run as local processes with the user's
+        permissions. A malicious server could access anything the user can access.
+    </aside>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 5: Cloud Deployment -->
+<!-- ============================================================ -->
+
+<section>
+    <h2>Deploying to the Cloud</h2>
+    <h4>Why go remote?</h4>
+    <table>
+        <thead><tr><th></th><th>Local (STDIO)</th><th>Remote (HTTPS)</th></tr></thead>
+        <tbody>
+            <tr><td>Access</td><td>Your machine only</td><td>Anywhere</td></tr>
+            <tr><td>Clients</td><td>One at a time</td><td>Multiple</td></tr>
+            <tr><td>State</td><td>Ephemeral</td><td>Persistent</td></tr>
+            <tr><td>Use case</td><td>Personal tools</td><td>Team/shared tools</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section>
+    <h2>Azure Container Apps</h2>
+    <div class="mermaid">
+    graph LR
+        A[Python Server] -->|docker build| B[Docker Image]
+        B -->|docker push| C[Azure Container Registry]
+        C -->|deploy| D[Container App<br>HTTPS endpoint]
+        D -->|MCP| E[AI Foundry Agent]
+        D -->|MCP| F[Claude Code]
+        style A fill:#3498db,stroke:#2980b9,color:#fff
+        style B fill:#e67e22,stroke:#d35400,color:#fff
+        style C fill:#9b59b6,stroke:#8e44ad,color:#fff
+        style D fill:#2ecc71,stroke:#27ae60,color:#fff
+        style E fill:#e74c3c,stroke:#c0392b,color:#fff
+        style F fill:#e74c3c,stroke:#c0392b,color:#fff
+    </div>
+    <pre><code class="language-bash"># Build → Push → Deploy
+docker build -t mcp-server .
+docker push mcpregistry.azurecr.io/mcp-server:latest
+az containerapp create --name mcp-app --image ... --ingress external</code></pre>
+</section>
+
+<section>
+    <h2>Azure AI Foundry + MCP</h2>
+    <div class="mermaid">
+    graph TB
+        subgraph Foundry ["Azure AI Foundry"]
+            Hub[Hub] --> Project[Project]
+            Project --> Agent[Agent + GPT-4o]
+        end
+        Agent <-->|"HTTPS / MCP"| MCP[Container App<br>MCP Server]
+        style Foundry fill:#1a5276,stroke:#2980b9,color:#fff
+        style MCP fill:#2ecc71,stroke:#27ae60,color:#fff
+    </div>
+    <pre><code class="language-python"># Connect MCP to Foundry Agent
+mcp_tool = client.agents.get_mcp_tool(
+    server_label="DevTools",
+    server_url="https://your-app.azurecontainerapps.io/mcp",
+)
+agent = await client.agents.create_agent(
+    model="gpt-4o-mini",
+    tools=mcp_tool.definitions,
+)</code></pre>
+</section>
+
+<section>
+    <h2>Authentication in Production</h2>
+    <div class="two-columns">
+        <div>
+            <h4>Options</h4>
+            <ul>
+                <li>API Key (header)</li>
+                <li>Azure Entra ID (OAuth)</li>
+                <li>Bearer tokens</li>
+                <li>mTLS (certificates)</li>
+            </ul>
+        </div>
+        <div>
+            <h4>Config</h4>
+            <pre><code class="language-json">{
+  "mcpServers": {
+    "remote": {
+      "url": "https://...",
+      "headers": {
+        "X-API-Key": "${env:KEY}"
+      }
+    }
+  }
+}</code></pre>
+        </div>
+    </div>
+    <div class="warning-box">
+        Never expose an MCP server to the internet without authentication.
+    </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 6: Lab Overview -->
+<!-- ============================================================ -->
+
+<section>
+    <h2>Lab Roadmap</h2>
+    <div class="mermaid">
+    graph LR
+        L1["Lab 1<br>Local Servers<br>(STDIO + HTTP)"] --> L2["Lab 2<br>External Sources<br>(Community Servers)"]
+        L2 --> L3["Lab 3<br>Azure Deployment<br>(Cloud + Foundry)"]
+        style L1 fill:#2ecc71,stroke:#27ae60,color:#fff
+        style L2 fill:#3498db,stroke:#2980b9,color:#fff
+        style L3 fill:#e74c3c,stroke:#c0392b,color:#fff
+    </div>
+    <table>
+        <thead><tr><th>Lab</th><th>What You Build</th><th>Time</th></tr></thead>
+        <tbody>
+            <tr><td><strong>Lab 1</strong></td><td>Python MCP server with dev tools + review prompts</td><td>45-60 min</td></tr>
+            <tr><td><strong>Lab 2</strong></td><td>Connect GitHub, Filesystem, Fetch servers</td><td>30-45 min</td></tr>
+            <tr><td><strong>Lab 3</strong></td><td>Deploy to Azure + connect to AI Foundry</td><td>60-90 min</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section>
+    <h2>What You'll Build</h2>
+    <div class="two-columns">
+        <div>
+            <h4>Lab 1 Tools</h4>
+            <ul>
+                <li><code>run_remote_command</code></li>
+                <li><code>file_tree</code></li>
+                <li><code>port_checker</code></li>
+            </ul>
+            <h4>Lab 1 Prompts</h4>
+            <ul>
+                <li><code>code_review</code></li>
+                <li><code>security_review</code></li>
+                <li><code>design_review</code></li>
+                <li><code>networking_review</code></li>
+            </ul>
+        </div>
+        <div>
+            <h4>Lab 3 Tools</h4>
+            <ul>
+                <li><code>search_issues</code></li>
+                <li><code>summarize_pr</code></li>
+                <li><code>check_service_health</code></li>
+                <li><code>run_query</code></li>
+            </ul>
+            <h4>Lab 2: External</h4>
+            <ul>
+                <li>Filesystem MCP</li>
+                <li>GitHub MCP</li>
+                <li>Fetch MCP</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section>
+    <h2>Getting Started</h2>
+    <pre><code class="language-bash"># 1. Clone and install
+git clone &lt;repo-url&gt; && cd local_mcp
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[notebooks]"
+
+# 2. Open the first lab notebook
+jupyter notebook labs/lab1-local-mcp-servers/lab1_notebook.ipynb
+
+# 3. Or ask the meta server for help!
+claude  # → "What labs are available?"</code></pre>
+    <div class="highlight-box">
+        <strong>Tip:</strong> This repo includes a meta MCP server. Open it in Claude Code
+        and ask questions about the labs themselves!
+    </div>
+</section>
+
+</div>
+</div>
+
+<!-- Reveal.js + plugins from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+
+<!-- Mermaid.js for diagrams -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+
+<script>
+    // Initialize Mermaid
+    mermaid.initialize({
+        startOnLoad: false,
+        theme: 'dark',
+        themeVariables: {
+            darkMode: true,
+            background: '#191919',
+            primaryColor: '#3498db',
+            secondaryColor: '#2ecc71',
+            tertiaryColor: '#e74c3c',
+            primaryTextColor: '#ecf0f1',
+            secondaryTextColor: '#bdc3c7',
+            lineColor: '#7f8c8d',
+        },
+        flowchart: { curve: 'basis' },
+        sequence: { mirrorActors: false },
+    });
+
+    // Render Mermaid diagrams after Reveal.js is ready
+    async function renderMermaid() {
+        const mermaidDivs = document.querySelectorAll('.mermaid');
+        for (let i = 0; i < mermaidDivs.length; i++) {
+            const div = mermaidDivs[i];
+            const graphDef = div.textContent.trim();
+            const id = `mermaid-${i}`;
+            try {
+                const { svg } = await mermaid.render(id, graphDef);
+                div.innerHTML = svg;
+            } catch (e) {
+                console.error('Mermaid render error:', e);
+            }
+        }
+    }
+
+    // Initialize Reveal.js
+    Reveal.initialize({
+        hash: true,
+        slideNumber: true,
+        plugins: [RevealHighlight, RevealNotes],
+    }).then(() => {
+        renderMermaid();
+    });
+</script>
+</body>
+</html>

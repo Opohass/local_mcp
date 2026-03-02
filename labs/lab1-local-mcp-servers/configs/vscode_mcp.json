@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "dev-tools": {
+      "command": "python",
+      "args": ["labs/lab1-local-mcp-servers/servers/dev_tools_stdio.py"]
+    }
+  }
+}

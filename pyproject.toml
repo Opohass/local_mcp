@@ -1,0 +1,29 @@
+[project]
+name = "mcp-hol"
+version = "1.0.0"
+description = "Hands-on Lab for MCP (Model Context Protocol) Servers"
+requires-python = ">=3.11"
+dependencies = [
+    "fastmcp>=2.0",
+    "httpx",
+]
+
+[project.optional-dependencies]
+lab3 = [
+    "azure-identity",
+    "azure-ai-projects",
+]
+notebooks = [
+    "jupyter",
+    "ipykernel",
+]
+dev = [
+    "pytest",
+    "ruff",
+]
+
+[tool.setuptools]
+py-modules = []
+
+[tool.ruff]
+line-length = 100
