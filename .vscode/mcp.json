@@ -1,8 +1,8 @@
 {
-  "mcpServers": {
+  "servers": {
     "mcp-hol-assistant": {
-      "command": "python",
-      "args": ["meta_server/lab_content_server.py"]
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": ["${workspaceFolder}/meta_server/lab_content_server.py"]
     }
   }
 }

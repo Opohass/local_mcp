@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "mcp-hol-assistant": {
-      "command": "python",
-      "args": ["meta_server/lab_content_server.py"]
+      "command": "/home/opohass/Documents/code/local_mcp/.venv/bin/python",
+      "args": ["/home/opohass/Documents/code/local_mcp/meta_server/lab_content_server.py"]
     }
   }
 }
