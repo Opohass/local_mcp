@@ -1,8 +1,12 @@
 {
   "mcpServers": {
-    "mcp-hol-assistant": {
-      "command": "/home/opohass/Documents/code/local_mcp/.venv/bin/python",
-      "args": ["/home/opohass/Documents/code/local_mcp/meta_server/lab_content_server.py"]
+    "mcp-hol-assistant_win": {
+      "command": ".\\.venv\\Scripts\\python.exe",
+      "args": [".\\meta_server\\lab_content_server.py"]
+    },
+    "mcp-hol-assistant_linux": {
+      "command": "./.venv/bin/python",
+      "args": ["./meta_server/lab_content_server.py"]
     }
   }
 }

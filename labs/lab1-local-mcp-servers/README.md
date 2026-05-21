@@ -36,6 +36,7 @@ A dev tools MCP server with:
 
 ## Quick Start (without notebook)
 
+**Linux / macOS**
 ```bash
 # Activate your virtual environment
 source .venv/bin/activate
@@ -49,6 +50,23 @@ python labs/lab1-local-mcp-servers/servers/dev_tools_http.py
 
 # Connect to Claude Code
 cp labs/lab1-local-mcp-servers/configs/mcp.json .mcp.json
+claude  # Tools should appear automatically
+```
+
+**Windows (PowerShell)**
+```powershell
+# Activate your virtual environment
+.venv\Scripts\Activate.ps1
+
+# Test the STDIO server
+py labs/lab1-local-mcp-servers/servers/dev_tools_stdio.py
+
+# Test the HTTP server
+py labs/lab1-local-mcp-servers/servers/dev_tools_http.py
+# → Server at http://localhost:9000
+
+# Connect to Claude Code
+Copy-Item labs/lab1-local-mcp-servers/configs/mcp.json .mcp.json
 claude  # Tools should appear automatically
 ```
 

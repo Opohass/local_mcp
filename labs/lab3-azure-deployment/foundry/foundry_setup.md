@@ -69,8 +69,8 @@ az ml workspace create \
 
 ### Via CLI
 
+**Linux / macOS**
 ```bash
-# Get the hub resource ID
 HUB_ID=$(az ml workspace show --name mcp-hol-hub --resource-group rg-mcp-hol --query id -o tsv)
 
 az ml workspace create \
@@ -78,6 +78,17 @@ az ml workspace create \
     --name mcp-hol-project \
     --resource-group rg-mcp-hol \
     --hub-id "$HUB_ID"
+```
+
+**Windows (PowerShell)**
+```powershell
+$HUB_ID = az ml workspace show --name mcp-hol-hub --resource-group rg-mcp-hol --query id -o tsv
+
+az ml workspace create `
+    --kind project `
+    --name mcp-hol-project `
+    --resource-group rg-mcp-hol `
+    --hub-id $HUB_ID
 ```
 
 ## Step 3: Deploy a Model
@@ -116,15 +127,18 @@ az ml workspace show \
 
 ## Step 5: Set Environment Variables
 
+**Linux / macOS**
 ```bash
-# Your Foundry project endpoint
 export AZURE_AI_PROJECT_ENDPOINT="https://<hub-name>.services.ai.azure.com/api/projects/<project-id>"
-
-# Your deployed MCP server URL (from Phase 4 of deploy_steps.md)
 export MCP_SERVER_URL="https://<container-app-fqdn>/mcp"
-
-# Model deployment name (default: gpt-4o-mini)
 export AZURE_AI_MODEL_DEPLOYMENT_NAME="gpt-4o-mini"
+```
+
+**Windows (PowerShell)**
+```powershell
+$env:AZURE_AI_PROJECT_ENDPOINT = "https://<hub-name>.services.ai.azure.com/api/projects/<project-id>"
+$env:MCP_SERVER_URL = "https://<container-app-fqdn>/mcp"
+$env:AZURE_AI_MODEL_DEPLOYMENT_NAME = "gpt-4o-mini"
 ```
 
 ## Step 6: Run the Foundry Agent
@@ -132,9 +146,16 @@ export AZURE_AI_MODEL_DEPLOYMENT_NAME="gpt-4o-mini"
 ```bash
 # Install Foundry dependencies
 pip install azure-identity azure-ai-projects
+```
 
-# Run the agent
+**Linux / macOS**
+```bash
 python labs/lab3-azure-deployment/foundry/foundry_agent.py
+```
+
+**Windows (PowerShell)**
+```powershell
+py labs/lab3-azure-deployment/foundry/foundry_agent.py
 ```
 
 ### Expected Output
@@ -169,9 +190,15 @@ az login
 ### "Model deployment not found"
 
 Verify the deployment name matches:
+
+**Linux / macOS**
 ```bash
 echo $AZURE_AI_MODEL_DEPLOYMENT_NAME
-# Should match exactly what you named it in the portal
+```
+
+**Windows (PowerShell)**
+```powershell
+$env:AZURE_AI_MODEL_DEPLOYMENT_NAME
 ```
 
 ### "MCP server connection refused"
@@ -181,8 +208,15 @@ echo $AZURE_AI_MODEL_DEPLOYMENT_NAME
    az containerapp show --name mcp-server-app --resource-group rg-mcp-hol --query "properties.runningStatus"
    ```
 2. Test the URL directly:
+
+   **Linux / macOS**
    ```bash
    curl $MCP_SERVER_URL
+   ```
+
+   **Windows (PowerShell)**
+   ```powershell
+   Invoke-WebRequest $env:MCP_SERVER_URL
    ```
 
 ### Agent returns empty response

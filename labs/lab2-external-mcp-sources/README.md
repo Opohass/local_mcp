@@ -46,8 +46,14 @@ Before you begin, ensure you have the following installed and configured:
 - Node.js 18+ and npm (so that `npx` is available)
 - If you plan to use the GitHub MCP server, create a GitHub Personal Access Token with `repo` scope and set it in your environment:
 
+**Linux / macOS**
 ```bash
 export GITHUB_TOKEN=ghp_your_token_here
+```
+
+**Windows (PowerShell)**
+```powershell
+$env:GITHUB_TOKEN = "ghp_your_token_here"
 ```
 
 See `prerequisites.md` for full details.
