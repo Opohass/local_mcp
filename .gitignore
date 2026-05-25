@@ -12,3 +12,4 @@ build/
 *.swp
 *.swo
 .ruff_cache/
+.vscode/mcp.json
