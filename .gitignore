@@ -13,3 +13,4 @@ build/
 *.swo
 .ruff_cache/
 .vscode/mcp.json
+.mcp.json
