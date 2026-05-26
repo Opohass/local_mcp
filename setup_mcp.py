@@ -1,63 +1,78 @@
-"""Generate .vscode/mcp.json so GitHub Copilot Chat auto-detects the meta MCP server.
+"""Generate MCP config files so VS Code Copilot Chat and Claude Code auto-detect the meta MCP server.
 
 Run:
     python setup_mcp.py
 
-Writes a config matching the official VS Code MCP schema:
-    https://code.visualstudio.com/docs/copilot/reference/mcp-configuration
+Writes:
+    .vscode/mcp.json - VS Code Copilot Chat schema (https://code.visualstudio.com/docs/copilot/reference/mcp-configuration)
+    .mcp.json        - Claude Code project schema (https://code.claude.com/docs/en/mcp)
+
+Each file contains a single server entry whose paths are fitted to the host OS
+at generation time (Windows uses `.venv\\Scripts\\python.exe`; Linux/macOS use
+`.venv/bin/python`).
 """
 
 import json
-import shutil
 import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.resolve()
-SERVER_SCRIPT = REPO_ROOT / "meta_server" / "lab_content_server.py"
+SERVER_SCRIPT_REL = "meta_server/lab_content_server.py"
 VENV_DIR = REPO_ROOT / ".venv"
-VSCODE_DIR = REPO_ROOT / ".vscode"
-MCP_JSON = VSCODE_DIR / "mcp.json"
+VSCODE_MCP_JSON = REPO_ROOT / ".vscode" / "mcp.json"
+CLAUDE_MCP_JSON = REPO_ROOT / ".mcp.json"
 SERVER_NAME = "mcp-hol-assistant"
 
+IS_WINDOWS = sys.platform == "win32"
+SEP = "\\" if IS_WINDOWS else "/"
+VENV_PYTHON_REL = SEP.join([".venv", "Scripts", "python.exe"]) if IS_WINDOWS else ".venv/bin/python"
+SERVER_SCRIPT_OS = SERVER_SCRIPT_REL.replace("/", SEP)
 
-def pick_python_command() -> str:
-    """Pick the Python interpreter VS Code should launch.
 
-    Prefers a project-local `.venv` (which is where fastmcp is installed).
-    The venv layout differs by OS: Windows uses `Scripts/python.exe`,
-    Linux/macOS use `bin/python`. We emit the path using ${workspaceFolder}
-    so the resulting JSON is workspace-relative.
-    """
-    is_windows = sys.platform == "win32"
-    venv_python = VENV_DIR / ("Scripts/python.exe" if is_windows else "bin/python")
-    if venv_python.exists():
-        return "${workspaceFolder}/.venv/" + ("Scripts/python.exe" if is_windows else "bin/python")
+def relative_with_dot(path: str) -> str:
+    """Prefix a relative path with the OS-appropriate `./` so it's unambiguous."""
+    return f".{SEP}{path}"
 
-    candidates = ["python", "python3"] if is_windows else ["python3", "python"]
-    for cmd in candidates:
-        if shutil.which(cmd):
-            return cmd
-    return candidates[0]
+
+def write_json(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    print(f"Wrote {path.relative_to(REPO_ROOT)}")
 
 
 def main() -> None:
-    if not SERVER_SCRIPT.exists():
-        sys.exit(f"Server script not found: {SERVER_SCRIPT}")
+    if not (REPO_ROOT / SERVER_SCRIPT_REL).exists():
+        sys.exit(f"Server script not found: {REPO_ROOT / SERVER_SCRIPT_REL}")
+    if not (VENV_DIR / VENV_PYTHON_REL.replace("\\", "/").split("/", 1)[1]).exists():
+        sys.exit(f"Project venv not found at {VENV_DIR}. Create it before running this script.")
 
-    VSCODE_DIR.mkdir(exist_ok=True)
+    command = relative_with_dot(VENV_PYTHON_REL)
+    args = [relative_with_dot(SERVER_SCRIPT_OS)]
 
-    config = {
+    # VS Code Copilot Chat: top-level "servers", per-entry "type: stdio".
+    vscode_config = {
         "servers": {
             SERVER_NAME: {
                 "type": "stdio",
-                "command": pick_python_command(),
-                "args": ["${workspaceFolder}/meta_server/lab_content_server.py"],
+                "command": command,
+                "args": args,
             }
         }
     }
 
-    MCP_JSON.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
-    print(f"Wrote {MCP_JSON.relative_to(REPO_ROOT)} (command: {config['servers'][SERVER_NAME]['command']})")
+    # Claude Code: top-level "mcpServers". Servers spawn with CWD = project root,
+    # so the same relative paths work without variable expansion.
+    claude_config = {
+        "mcpServers": {
+            SERVER_NAME: {
+                "command": command,
+                "args": args,
+            }
+        }
+    }
+
+    write_json(VSCODE_MCP_JSON, vscode_config)
+    write_json(CLAUDE_MCP_JSON, claude_config)
 
 
 if __name__ == "__main__":
