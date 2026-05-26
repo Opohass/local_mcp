@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__mcp-hol-assistant_win__list_labs",
+      "mcp__mcp-hol-assistant_win__get_lab_content",
+      "mcp__mcp-hol-assistant_win__get_lab_prerequisites"
+    ]
+  }
+}

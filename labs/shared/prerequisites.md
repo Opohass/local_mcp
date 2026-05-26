@@ -14,11 +14,12 @@
 
 | Tool | Purpose | Install |
 |------|---------|---------|
-| uv | Fast Python package manager | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
+| uv | Fast Python package manager | Linux/macOS: `curl -LsSf https://astral.sh/uv/install.sh \| sh` · Windows: `winget install astral-sh.uv` |
 | Node.js + npm | Required for Lab 2 external servers | [nodejs.org](https://nodejs.org/) |
 
 ## Setup
 
+**Linux / macOS**
 ```bash
 # Clone the repository
 git clone <repo-url>
@@ -26,8 +27,7 @@ cd local_mcp
 
 # Create virtual environment
 python -m venv .venv
-source .venv/bin/activate  # Linux/macOS
-# .venv\Scripts\activate   # Windows
+source .venv/bin/activate
 
 # Install base dependencies
 pip install -e .
@@ -39,6 +39,28 @@ pip install -e ".[notebooks]"
 pip install -e ".[notebooks,dev]"
 ```
 
+**Windows (PowerShell)**
+```powershell
+# Clone the repository
+git clone <repo-url>
+cd local_mcp
+
+# Create virtual environment
+py -m venv .venv
+.venv\Scripts\Activate.ps1
+
+# Install base dependencies
+pip install -e .
+
+# Install with notebook support
+pip install -e ".[notebooks]"
+
+# Install all optional dependencies
+pip install -e ".[notebooks,dev]"
+```
+
+> **Windows note:** If `Activate.ps1` is blocked, run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` once in PowerShell, then retry.
+
 ## Lab-Specific Prerequisites
 
 - **Lab 1**: No additional requirements beyond the base setup.
@@ -47,8 +69,17 @@ pip install -e ".[notebooks,dev]"
 
 ## Verify Your Setup
 
+**Linux / macOS**
 ```bash
 python --version          # Should be 3.11+
+pip show fastmcp          # Should show fastmcp package info
+claude --version          # Claude Code CLI
+code --version            # VS Code
+```
+
+**Windows (PowerShell)**
+```powershell
+py --version              # Should be 3.11+
 pip show fastmcp          # Should show fastmcp package info
 claude --version          # Claude Code CLI
 code --version            # VS Code

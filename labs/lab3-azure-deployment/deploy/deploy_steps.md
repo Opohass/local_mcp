@@ -54,9 +54,17 @@ az account set --subscription "<subscription-id>"
 
 ### 2.1 Run the MCP server
 
+**Linux / macOS**
 ```bash
 cd labs/lab3-azure-deployment/server
 python azure_mcp_server.py
+# → Starting Azure Dev Tools MCP server on http://0.0.0.0:9000
+```
+
+**Windows (PowerShell)**
+```powershell
+cd labs/lab3-azure-deployment/server
+py azure_mcp_server.py
 # → Starting Azure Dev Tools MCP server on http://0.0.0.0:9000
 ```
 
@@ -127,9 +135,15 @@ docker run -p 9000:9000 mcp-server:latest
 ```
 
 Verify in another terminal:
+
+**Linux / macOS**
 ```bash
 curl http://localhost:9000/docs
-# Should return the FastMCP docs page or a 200 response
+```
+
+**Windows (PowerShell)**
+```powershell
+Invoke-WebRequest http://localhost:9000/docs
 ```
 
 ---
@@ -239,6 +253,7 @@ az containerapp create \
 
 ### 4.6 Get the deployment URL
 
+**Linux / macOS**
 ```bash
 FQDN=$(az containerapp show \
     --name mcp-server-app \
@@ -249,11 +264,28 @@ FQDN=$(az containerapp show \
 echo "Your MCP server is at: https://$FQDN"
 ```
 
+**Windows (PowerShell)**
+```powershell
+$FQDN = az containerapp show `
+    --name mcp-server-app `
+    --resource-group rg-mcp-hol `
+    --query "properties.configuration.ingress.fqdn" `
+    --output tsv
+
+Write-Host "Your MCP server is at: https://$FQDN"
+```
+
 ### 4.7 Verify the deployment
 
+**Linux / macOS**
 ```bash
 curl https://$FQDN/docs
 # Should return the FastMCP documentation page
+```
+
+**Windows (PowerShell)**
+```powershell
+Invoke-WebRequest "https://$FQDN/docs"
 ```
 
 **Expected output for observers**:
@@ -315,15 +347,31 @@ Note the endpoint URL — you'll need it for the agent.
 ### 5.4 Connect MCP Server to Foundry Agent
 
 Set environment variables:
+
+**Linux / macOS**
 ```bash
 export AZURE_AI_PROJECT_ENDPOINT="https://<your-hub>.services.ai.azure.com/api/projects/<project-id>"
 export AZURE_AI_MODEL_DEPLOYMENT_NAME="gpt-4o-mini"
 export MCP_SERVER_URL="https://<your-fqdn>/mcp"
 ```
 
+**Windows (PowerShell)**
+```powershell
+$env:AZURE_AI_PROJECT_ENDPOINT = "https://<your-hub>.services.ai.azure.com/api/projects/<project-id>"
+$env:AZURE_AI_MODEL_DEPLOYMENT_NAME = "gpt-4o-mini"
+$env:MCP_SERVER_URL = "https://<your-fqdn>/mcp"
+```
+
 Run the Foundry agent script:
+
+**Linux / macOS**
 ```bash
 python labs/lab3-azure-deployment/foundry/foundry_agent.py
+```
+
+**Windows (PowerShell)**
+```powershell
+py labs/lab3-azure-deployment/foundry/foundry_agent.py
 ```
 
 See [foundry/foundry_setup.md](../foundry/foundry_setup.md) for detailed setup instructions.
@@ -352,9 +400,12 @@ Done.
 
 ### Automated
 
+**Linux / macOS**
 ```bash
 ./labs/lab3-azure-deployment/deploy/cleanup.sh rg-mcp-hol
 ```
+
+**Windows**: No PowerShell equivalent script is included — use the manual step below.
 
 ### Manual
 

@@ -13,6 +13,7 @@ A hands-on workshop for learning **Model Context Protocol (MCP)** — the open s
 
 ## Quick Start
 
+**Linux / macOS**
 ```bash
 # Clone and install
 git clone <repo-url> && cd local_mcp
@@ -25,6 +26,23 @@ cd presentation && python -m http.server 8080
 # Start Lab 1
 jupyter notebook labs/lab1-local-mcp-servers/lab1_notebook.ipynb
 ```
+
+**Windows (PowerShell)**
+```powershell
+# Clone and install
+git clone <repo-url>; cd local_mcp
+py -m venv .venv; .venv\Scripts\Activate.ps1
+pip install -e ".[notebooks]"
+
+# Run the presentation
+cd presentation; python -m http.server 8080
+
+# Start Lab 1
+jupyter notebook labs/lab1-local-mcp-servers/lab1_notebook.ipynb
+```
+
+> **Windows note:** If running `Activate.ps1` is blocked by your execution policy, run
+> `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` once in PowerShell, then retry.
 
 ## Prerequisites
 
@@ -49,7 +67,12 @@ local_mcp/
 
 This repo includes an MCP server that lets you ask AI assistants questions about the lab content itself. If you open this repo in Claude Code, the meta server is auto-configured in `.mcp.json`.
 
+**Linux / macOS**
 ```bash
-# Or run it manually
 python meta_server/lab_content_server.py
+```
+
+**Windows (PowerShell)**
+```powershell
+py meta_server/lab_content_server.py
 ```

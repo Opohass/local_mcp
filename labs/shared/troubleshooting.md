@@ -9,8 +9,16 @@ ModuleNotFoundError: No module named 'fastmcp'
 ```
 
 **Fix**: Make sure you installed in the active virtual environment:
+
+**Linux / macOS**
 ```bash
 source .venv/bin/activate
+pip install -e .
+```
+
+**Windows (PowerShell)**
+```powershell
+.venv\Scripts\Activate.ps1
 pip install -e .
 ```
 
@@ -21,9 +29,17 @@ OSError: [Errno 98] Address already in use
 ```
 
 **Fix**: Find and kill the process using the port:
+
+**Linux / macOS**
 ```bash
 lsof -i :9000
 kill <PID>
+```
+
+**Windows (PowerShell)**
+```powershell
+netstat -ano | findstr :9000
+taskkill /PID <PID> /F
 ```
 Or change the port in `dev_tools_http.py`.
 
@@ -32,7 +48,9 @@ Or change the port in `dev_tools_http.py`.
 **Possible causes**:
 1. **Config path wrong** — Claude Code reads `.mcp.json` from the project root. Make sure you're running `claude` from the repo directory.
 2. **Server not starting** — Test the server manually first: `python labs/lab1-local-mcp-servers/servers/dev_tools_stdio.py`
-3. **Python path** — The config uses `python` but your venv might need the full path. Try: `"command": ".venv/bin/python"`
+3. **Python path** — The config uses `python` but your venv might need the full path. Try:
+   - Linux / macOS: `"command": ".venv/bin/python"`
+   - Windows: `"command": ".venv\\Scripts\\python"`
 
 ### VS Code Copilot doesn't show MCP tools
 
