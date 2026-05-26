@@ -12,7 +12,7 @@ By the end of this lab you will be able to:
 ## What You'll Connect
 
 | Server | Provider | What It Does |
-|--------|----------|-------------|
+| -------- | ---------- |-------------|
 | Filesystem MCP | Official (Anthropic) | Read, write, and search files through MCP |
 | GitHub MCP | GitHub | Search repos, read files, manage issues/PRs |
 | Fetch MCP | Official (Anthropic) | Fetch and parse web pages |

@@ -367,7 +367,7 @@ def get_service_logs(service: str) -> str:
 <section>
     <h2>Testing: FastMCP Inspector</h2>
     <pre><code class="language-bash"># Launch the web inspector
-fastmcp dev my_server.py</code></pre>
+fastmcp dev inspector my_server.py</code></pre>
     <div class="highlight-box">
         <p>Opens a web UI where you can:</p>
         <ul>
@@ -412,7 +412,7 @@ claude
     <h2>Connecting to VS Code</h2>
     <p>Create <code>.vscode/mcp.json</code> in your workspace:</p>
     <pre><code class="language-json">{
-  "mcpServers": {
+  "servers": {
     "dev-tools": {
       "command": "python",
       "args": ["path/to/server.py"]
@@ -434,7 +434,7 @@ claude
     <h2>External MCP Servers</h2>
     <p>Connect to community-built servers via <code>npx</code>:</p>
     <pre><code class="language-json">{
-  "mcpServers": {
+  "servers": {
     "filesystem": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-filesystem", "."]
